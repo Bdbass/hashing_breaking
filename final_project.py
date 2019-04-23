@@ -2,6 +2,9 @@ import hashlib as hb
 import binascii, os, random
 
 """
+Ran on Intel(R) Xeon(R) CPU E5645 @ 2.40 GHz
+Has 24 processing units, 10 cores
+
 algorithms avaliable on my machine, if you're repeating this experiement try running
 print(hb.algorithms_available)
 to get the algorithms available on your own machine before running the below code
@@ -173,9 +176,38 @@ def crackFile(common, hashed):
 		print('hash type is ', hash_type)
 		return crackNHMAC(common, hashed, hash_type)
 
+def createSaltDictionary(file):
+	hash_dict = {}
+	with open(file, 'r') as hash_file:
+		for i, line in enumerate(hash_file):
+			line = line.strip()
+			hash_dict[line[64:]] = i #remove salt 
+	return hash_dict
+
+
+# potential speeds ups, use a GPU (maybe up to 100x times speed up)
+# delete hashes that have been cracked, decreasing inner loop size
 def crackHMAC(common, hashed):
-	print('TODO')
-	pass
+	hash_dict = createSaltDictionary(hashed)
+	count = 0
+	with open(common, 'r') as common_passwords:
+		for i, common_pass in enumerate(common_passwords):
+			if i < 500: # try going through first 500 passwords
+				common_pass = common_pass.strip()
+				with open(hashed, 'r') as hashed_passwords:
+					for j, hash_pass in enumerate(hashed_passwords):
+						if j < 1000: # try going first 1000 salts
+							salt = hash_pass.strip()
+							salt = salt[:64]
+							temp_hash = binascii.hexlify(hb.pbkdf2_hmac('sha512', common_pass.encode('utf-8'), 
+		                                salt.encode('ascii'), rounds)).decode('ascii')
+							if temp_hash in hash_dict:
+								count += 1
+						else: 
+							break
+			else: 
+				break
+	return count
 
 
 def crackNHMAC(common_pass_file, hashed_pass_file, hashtype):
@@ -191,8 +223,8 @@ def crackNHMAC(common_pass_file, hashed_pass_file, hashtype):
 
 
 def main():
-	createRandomHash('half_million_passwords.txt', 'hash_test.txt', 0, 10000)
-	print('Passwords hashed')
+	# createRandomHash('half_million_passwords.txt', 'hash_test.txt', 0, 10000)
+	# print('Passwords hashed')
 	print(crackFile('rockyou.txt', 'hash_test.txt'))
 
 main()
