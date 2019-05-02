@@ -5,6 +5,18 @@ import binascii, os, random
 Ran on Intel(R) Xeon(R) CPU E5645 @ 2.40 GHz
 Has 24 processing units, 10 cores
 
+Could use an AWS GPU with cuda for speed up, possibly up to 100x
+https://devblogs.nvidia.com/numba-python-cuda-acceleration/
+
+Three scenerios 
+No plain hash, takes about 1 minute to crack over 200,000 passwords given a set of 500,000
+
+Salt and hash, takes around 500,000 minutes or around 5000 with GPU computuing, which is 
+about 5000/(60*24) = 3.5 days, still not too bad 
+
+Salt and hash and x amount of rounds, say we have 100,000 rounds
+5,000 minutes * (x ) = 
+
 algorithms avaliable on my machine, if you're repeating this experiement try running
 print(hb.algorithms_available)
 to get the algorithms available on your own machine before running the below code
@@ -52,7 +64,7 @@ long it would take for 100000 to process
 
 chars = [64, 56, 128, 128,  32, 96, 192]
 algorithms = ['SHA256', 'sha224', 'SHA512', 'sha512', 'md5', 'sha384']
-rounds = 5000
+rounds = 100000
 """ 
 parses passwords from a list of username password pairs, from a file
 stores results in file_to, should complete this as a preprocessing activity
@@ -171,7 +183,7 @@ def crackFile(common, hashed):
 	hash_type, hmac = determineAlgorithm(hashed)
 	if hmac:
 		print('hash type is hmac')
-		crackHMAC(common, hashed)
+		return crackHMAC(common, hashed)
 	else:
 		print('hash type is ', hash_type)
 		return crackNHMAC(common, hashed, hash_type)
@@ -223,9 +235,23 @@ def crackNHMAC(common_pass_file, hashed_pass_file, hashtype):
 
 
 def main():
+    ## use these lines for random hashing and cracking
 	# createRandomHash('half_million_passwords.txt', 'hash_test.txt', 0, 10000)
 	# print('Passwords hashed')
-	print(crackFile('rockyou.txt', 'hash_test.txt'))
+    #print(crackFile('rockyou.txt', 'hash_test.txt'))
+    
+    ## use these lines for specific hashing type and cracking
+#    createHashs('half_million_passwords.txt', 'hash_test.txt', 'SHA256', False, 0, 500000)
+#    print('Passwords hashed')
+#    print(crackFile('rockyou.txt', 'hash_test.txt'))
+
+    ##use these lines for SHA256, salting, and round time testing
+#    createHashs('half_million_passwords.txt', 'hash_test.txt', 'SHA256', True, 0, 500000)
+#    print('Passwords hashed with salt and 100,000 round')
+
+    ##hmac single test
+    hmac_password('password')
+    print('Passwords hashed with salt and 100,000 round')
 
 main()
 
